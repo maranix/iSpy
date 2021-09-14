@@ -23,13 +23,15 @@ class GamePage extends StatefulWidget {
 }
 
 class _GamePageState extends State<GamePage> {
+  final TextEditingController _textFieldController = TextEditingController();
   bool _isAttachmentUploading = false;
   bool _imageSent = false;
   int score = 0;
   int lives = 3;
   bool _isAlive = true;
-  String player1 = "";
-  String player2 = "";
+  String player1 = '';
+  String player2 = '';
+  String valueText = '';
 
   void _handleCorrectAnswer() {
     setState(() {
@@ -157,6 +159,7 @@ class _GamePageState extends State<GamePage> {
           message,
           widget.room.id,
         );
+        _describeObjectDialog(context);
         _setAttachmentUploading(false);
         _imageSent = true;
         _getPlayerIds();
@@ -197,6 +200,7 @@ class _GamePageState extends State<GamePage> {
           message,
           widget.room.id,
         );
+        _describeObjectDialog(context);
         _setAttachmentUploading(false);
         _imageSent = true;
         _getPlayerIds();
@@ -251,6 +255,41 @@ class _GamePageState extends State<GamePage> {
     });
   }
 
+  Future<void> _describeObjectDialog(BuildContext context) async {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Describe your object'),
+            content: TextField(
+              onChanged: (value) {
+                setState(() {
+                  valueText = value;
+                });
+              },
+              controller: _textFieldController,
+              decoration: const InputDecoration(
+                  hintText: "Use a letter to describe the object"),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  setState(() {
+                    var objectDescription = types.PartialText(
+                        text:
+                            'I spy with my little eye a thing starting with the letter: $valueText');
+                    _handleSendPressed(objectDescription);
+                    valueText = '';
+                    Navigator.pop(context);
+                  });
+                },
+              ),
+            ],
+          );
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -262,10 +301,6 @@ class _GamePageState extends State<GamePage> {
           IconButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // FirebaseFirestore.instance
-              //     .collection('rooms')
-              //     .doc(widget.room.id)
-              //     .delete();
             },
             icon: const Icon(Icons.stop),
           )
@@ -333,18 +368,19 @@ class _GamePageState extends State<GamePage> {
       ),
       floatingActionButtonLocation:
           FloatingActionButtonLocation.miniCenterDocked,
-      floatingActionButton: _imageSent
-          ? const SizedBox()
-          : Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: FloatingActionButton(
-                backgroundColor: Colors.blue,
-                child: const Icon(Icons.add_a_photo),
-                onPressed: () => {
-                  _handleAtachmentPressed(),
-                },
-              ),
-            ),
+      floatingActionButton:
+          _imageSent || player1 != FirebaseChatCore.instance.firebaseUser!.uid
+              ? const SizedBox()
+              : Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: FloatingActionButton(
+                    backgroundColor: Colors.blue,
+                    child: const Icon(Icons.add_a_photo),
+                    onPressed: () => {
+                      _handleAtachmentPressed(),
+                    },
+                  ),
+                ),
     );
   }
 }
