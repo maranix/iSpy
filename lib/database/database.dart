@@ -22,19 +22,24 @@ class Database {
 
   updateUserPresence() async {
     Map<String, dynamic> presenceStatusTrue = {
-      'presence': true,
+      'presense': true,
     };
 
     await databaseReference
         .child(uid)
+        .child('metadata')
         .update(presenceStatusTrue)
         .whenComplete(() => debugPrint('Updated your presence.'))
         .catchError((e) => debugPrint(e));
 
     Map<String, dynamic> presenceStatusFalse = {
-      'presence': false,
+      'presense': false,
     };
 
-    databaseReference.child(uid).onDisconnect().update(presenceStatusFalse);
+    databaseReference
+        .child(uid)
+        .child('metadata')
+        .onDisconnect()
+        .update(presenceStatusFalse);
   }
 }

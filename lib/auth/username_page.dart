@@ -13,6 +13,9 @@ class UserNamePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ControllerText _text = ControllerText();
+    Map<String, dynamic> metadata = {
+      "presense": true,
+    };
 
     return Scaffold(
       body: Center(
@@ -26,9 +29,6 @@ class UserNamePage extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
                 'Your current username is ${user.displayName}, enter a new username to change it.'),
-            const SizedBox(height: 10),
-            const Text(
-                'Pick a suitable username for yourself and let\'s get started'),
             const SizedBox(height: 40),
             SizedBox(
               width: MediaQuery.of(context).size.width * 0.8,
@@ -61,7 +61,8 @@ class UserNamePage extends StatelessWidget {
                 await FirebaseChatCore.instance.createUserInFirestore(
                   types.User(
                     firstName: _text.controllerText.value,
-                    id: user.uid, // UID from Firebase Authentication
+                    id: user.uid,
+                    metadata: metadata,
                   ),
                 ),
                 Get.off(

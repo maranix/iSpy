@@ -17,6 +17,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  Database database = Database();
+
   void _handlePressed(types.User otherUser, BuildContext context) async {
     final room = await FirebaseChatCore.instance.createRoom(otherUser);
 
@@ -50,10 +52,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    Database database = Database();
+  void initState() {
     database.updateUserPresence();
+    super.initState();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: SafeArea(
@@ -102,6 +107,7 @@ class _HomePageState extends State<HomePage> {
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) {
                         final user = snapshot.data![index];
+                        final presence = user.metadata;
 
                         return GestureDetector(
                           onTap: () {
@@ -113,9 +119,23 @@ class _HomePageState extends State<HomePage> {
                               vertical: 8,
                             ),
                             child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                _buildAvatar(user),
-                                Text(getUserName(user)),
+                                Row(
+                                  children: [
+                                    _buildAvatar(user),
+                                    Text(
+                                      getUserName(user),
+                                    ),
+                                  ],
+                                ),
+                                Icon(
+                                  Icons.circle,
+                                  size: 12.0,
+                                  color: presence!['presence']
+                                      ? Colors.greenAccent[400]
+                                      : Colors.grey,
+                                )
                               ],
                             ),
                           ),
