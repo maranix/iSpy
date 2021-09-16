@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:ispy/home/home_page.dart';
+
+class ControllerText extends GetxController {
+  var controllerText = ''.obs;
+}
 
 class AuthPage extends StatelessWidget {
   const AuthPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final ControllerText _text = Get.put(ControllerText());
+
     return Scaffold(
       body: Center(
         child: Column(
@@ -26,7 +34,11 @@ class AuthPage extends StatelessWidget {
               height: 10,
             ),
             TextButton(
-              onPressed: () => {},
+              onPressed: () => {
+                Get.to(
+                  () => HomePage(username: _text.controllerText.value),
+                ),
+              },
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all(Colors.blueAccent),
               ),
@@ -51,6 +63,7 @@ class UsernameFormField extends StatefulWidget {
 
 class _UsernameFormFieldState extends State<UsernameFormField> {
   final TextEditingController _controller = TextEditingController();
+  final ControllerText _text = Get.put(ControllerText());
 
   @override
   void dispose() {
@@ -72,7 +85,7 @@ class _UsernameFormFieldState extends State<UsernameFormField> {
       controller: _controller,
       onChanged: (value) => {
         setState(() {
-          debugPrint(value);
+          _text.controllerText.value = value;
         })
       },
     );
