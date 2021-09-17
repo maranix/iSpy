@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ispy/auth/utils/textcontroller.dart';
+import 'package:ispy/database/database.dart';
 import 'package:ispy/home/home_page.dart';
 
 class UserNamePage extends StatelessWidget {
@@ -11,6 +12,7 @@ class UserNamePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ControllerText _text = ControllerText();
+    Database database = Database();
 
     return Scaffold(
       body: Center(
@@ -47,11 +49,19 @@ class UserNamePage extends StatelessWidget {
               height: 10,
             ),
             TextButton(
-              onPressed: () => {
+              onPressed: () async => {
                 if (_text.controllerText.value.isNotEmpty)
-                  user.updateDisplayName(_text.controllerText.value),
+                  {
+                    user.updateDisplayName(_text.controllerText.value),
+                  }
+                else
+                  {
+                    _text.controllerText.value = user.displayName as String,
+                  },
+                await database.storeUserData(
+                    userName: _text.controllerText.value),
                 Get.off(
-                  () => HomePage(user: user),
+                  () => HomePage(username: _text.controllerText.value),
                 ),
               },
               style: ButtonStyle(
