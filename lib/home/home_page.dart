@@ -1,59 +1,70 @@
-// ignore_for_file: unused_local_variable
-
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
+import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:get/get.dart';
 import 'package:ispy/auth/utils/authentication.dart';
 import 'package:ispy/database/database.dart';
+import 'package:ispy/game/game_page.dart';
+import 'package:ispy/game/util.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({Key? key, required this.username}) : super(key: key);
 
   final String username;
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  void _handlePressed(types.User otherUser, BuildContext context) async {
+    final room = await FirebaseChatCore.instance.createRoom(otherUser);
+
+    // Navigator.of(context).pop();
+    await Get.to(
+      () => GamePage(
+        room: room,
+      ),
+    );
+  }
+
+  Widget _buildAvatar(types.User user) {
+    final color = getUserAvatarNameColor(user);
+    final hasImage = user.imageUrl != null;
+    final name = getUserName(user);
+
+    return Container(
+      margin: const EdgeInsets.only(right: 16),
+      child: CircleAvatar(
+        backgroundColor: hasImage ? Colors.transparent : color,
+        backgroundImage: hasImage ? NetworkImage(user.imageUrl!) : null,
+        radius: 20,
+        child: !hasImage
+            ? Text(
+                name.isEmpty ? '' : name[0].toUpperCase(),
+                style: const TextStyle(color: Colors.white),
+              )
+            : null,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final ImagePicker _picker = ImagePicker();
-    XFile? image, photo;
     Database database = Database();
     database.updateUserPresence();
 
     return Scaffold(
       body: SafeArea(
-        child: Center(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Welcome, $username'),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TextButton(
-                    onPressed: () async => {
-                      image =
-                          await _picker.pickImage(source: ImageSource.gallery)
-                    },
-                    style: ButtonStyle(
-                      backgroundColor:
-                          MaterialStateProperty.all(Colors.blueAccent),
-                    ),
-                    child: const Text(
-                      'Pick an Image',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () async => {
-                      photo =
-                          await _picker.pickImage(source: ImageSource.camera)
-                    },
-                    style: ButtonStyle(
-                      backgroundColor:
-                          MaterialStateProperty.all(Colors.blueAccent),
-                    ),
-                    child: const Text(
-                      'Capture an Image',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
+                  Text('Welcome, ${widget.username}'),
                   TextButton(
                     onPressed: () async => {
                       await Authentication.signOut(context: context),
@@ -66,8 +77,52 @@ class HomePage extends StatelessWidget {
                       'Sign out',
                       style: TextStyle(color: Colors.white),
                     ),
-                  )
+                  ),
                 ],
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.8,
+                width: MediaQuery.of(context).size.width,
+                child: StreamBuilder<List<types.User>>(
+                  stream: FirebaseChatCore.instance.users(),
+                  initialData: const [],
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Container(
+                        alignment: Alignment.center,
+                        margin: const EdgeInsets.only(
+                          bottom: 200,
+                        ),
+                        child: const Text('No users'),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (context, index) {
+                        final user = snapshot.data![index];
+
+                        return GestureDetector(
+                          onTap: () {
+                            _handlePressed(user, context);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: Row(
+                              children: [
+                                _buildAvatar(user),
+                                Text(getUserName(user)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ],
           ),

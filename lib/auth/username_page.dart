@@ -1,9 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
 import 'package:get/get.dart';
 import 'package:ispy/auth/utils/textcontroller.dart';
-import 'package:ispy/database/database.dart';
 import 'package:ispy/home/home_page.dart';
+import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
 class UserNamePage extends StatelessWidget {
   const UserNamePage({Key? key, required this.user}) : super(key: key);
@@ -12,7 +13,6 @@ class UserNamePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ControllerText _text = ControllerText();
-    Database database = Database();
 
     return Scaffold(
       body: Center(
@@ -58,8 +58,12 @@ class UserNamePage extends StatelessWidget {
                   {
                     _text.controllerText.value = user.displayName as String,
                   },
-                await database.storeUserData(
-                    userName: _text.controllerText.value),
+                await FirebaseChatCore.instance.createUserInFirestore(
+                  types.User(
+                    firstName: _text.controllerText.value,
+                    id: user.uid, // UID from Firebase Authentication
+                  ),
+                ),
                 Get.off(
                   () => HomePage(username: _text.controllerText.value),
                 ),
