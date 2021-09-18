@@ -54,7 +54,7 @@ class _GamePageState extends State<GamePage> {
                   },
                   child: const Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('File'),
+                    child: Text('Gallery'),
                   ),
                 ),
                 TextButton(
@@ -74,7 +74,7 @@ class _GamePageState extends State<GamePage> {
 
   void _handleFileSelection() async {
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.any,
+      type: FileType.image,
     );
 
     if (result != null) {
@@ -105,9 +105,8 @@ class _GamePageState extends State<GamePage> {
 
   void _handleImageSelection() async {
     final result = await ImagePicker().pickImage(
-      imageQuality: 70,
-      maxWidth: 1440,
-      source: ImageSource.gallery,
+      imageQuality: 95,
+      source: ImageSource.camera,
     );
 
     if (result != null) {
@@ -190,7 +189,8 @@ class _GamePageState extends State<GamePage> {
     return Scaffold(
       appBar: AppBar(
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        title: const Text('Chat'),
+        title: const Text('Game Lobby'),
+        centerTitle: true,
       ),
       body: StreamBuilder<types.Room>(
         initialData: widget.room,
@@ -212,11 +212,26 @@ class _GamePageState extends State<GamePage> {
                   user: types.User(
                     id: FirebaseChatCore.instance.firebaseUser?.uid ?? '',
                   ),
+                  customBottomWidget: const BottomAppBar(
+                    child: SizedBox(height: 60),
+                  ),
                 ),
               );
             },
           );
         },
+      ),
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.miniCenterDocked,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: FloatingActionButton(
+          backgroundColor: Colors.blue,
+          child: const Icon(Icons.add_a_photo),
+          onPressed: () => {
+            _handleAtachmentPressed(),
+          },
+        ),
       ),
     );
   }
