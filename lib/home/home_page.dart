@@ -22,8 +22,7 @@ class _HomePageState extends State<HomePage> {
   void _handlePressed(types.User otherUser, BuildContext context) async {
     final room = await FirebaseChatCore.instance.createRoom(otherUser);
 
-    // Navigator.of(context).pop();
-    await Get.to(
+    Get.to(
       () => GamePage(
         room: room,
       ),
@@ -114,8 +113,8 @@ class _HomePageState extends State<HomePage> {
                         final presence = user.metadata;
 
                         return GestureDetector(
-                          onTap: () {
-                            _handlePressed(user, context);
+                          onTap: () async => {
+                            _handlePressed(user, context),
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
