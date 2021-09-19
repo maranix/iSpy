@@ -54,7 +54,7 @@ class AuthPage extends StatelessWidget {
                   }
                   return const CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.orangeAccent,
+                      Colors.black,
                     ),
                   );
                 },
