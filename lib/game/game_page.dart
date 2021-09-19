@@ -36,6 +36,7 @@ class _GamePageState extends State<GamePage> {
   void _handleCorrectAnswer() {
     setState(() {
       score++;
+      _imageSent = false;
     });
     var result = types.PartialText(
         text: 'You guessed correctly! \n Your score is: $score');
@@ -58,6 +59,7 @@ class _GamePageState extends State<GamePage> {
 
       setState(() {
         _isAlive = false;
+        _imageSent = false;
       });
     }
   }
@@ -200,9 +202,9 @@ class _GamePageState extends State<GamePage> {
           message,
           widget.room.id,
         );
+        _imageSent = true;
         _describeObjectDialog(context);
         _setAttachmentUploading(false);
-        _imageSent = true;
         _getPlayerIds();
       } finally {
         _setAttachmentUploading(false);
@@ -280,7 +282,7 @@ class _GamePageState extends State<GamePage> {
                         text:
                             'I spy with my little eye a thing starting with the letter: $valueText');
                     _handleSendPressed(objectDescription);
-                    valueText = '';
+                    _textFieldController.clear();
                     Navigator.pop(context);
                   });
                 },
@@ -314,6 +316,8 @@ class _GamePageState extends State<GamePage> {
             initialData: const [],
             stream: FirebaseChatCore.instance.messages(snapshot.data!),
             builder: (context, snapshot) {
+              _getPlayerIds();
+              print(lives);
               return SafeArea(
                 bottom: false,
                 child: Chat(
@@ -333,7 +337,7 @@ class _GamePageState extends State<GamePage> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 50.0, vertical: 10.0),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Container(
                                 decoration: const BoxDecoration(
@@ -355,10 +359,14 @@ class _GamePageState extends State<GamePage> {
                             ],
                           ),
                         )
-                      : TextButton(
-                          onPressed: _continueGame,
-                          child: const Text('Continue'),
-                        ),
+                      : player1 ==
+                                  FirebaseChatCore.instance.firebaseUser!.uid &&
+                              lives == 1
+                          ? TextButton(
+                              onPressed: _continueGame,
+                              child: const Text('Continue'),
+                            )
+                          : const SizedBox(),
                   disableImageGallery: true,
                 ),
               );
@@ -368,10 +376,10 @@ class _GamePageState extends State<GamePage> {
       ),
       floatingActionButtonLocation:
           FloatingActionButtonLocation.miniCenterDocked,
-      floatingActionButton:
-          _imageSent || player1 != FirebaseChatCore.instance.firebaseUser!.uid
-              ? const SizedBox()
-              : Padding(
+      floatingActionButton: _imageSent
+          ? const SizedBox()
+          : player1 == FirebaseChatCore.instance.firebaseUser!.uid && lives != 1
+              ? Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: FloatingActionButton(
                     backgroundColor: Colors.blue,
@@ -380,7 +388,8 @@ class _GamePageState extends State<GamePage> {
                       _handleAtachmentPressed(),
                     },
                   ),
-                ),
+                )
+              : const SizedBox(),
     );
   }
 }
