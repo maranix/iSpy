@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:extended_image/extended_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -6,11 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
-import 'package:http/http.dart' as http;
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:ispy/game/draw_screen.dart';
 import 'package:mime/mime.dart';
-import 'package:open_file/open_file.dart';
-import 'package:path_provider/path_provider.dart';
 
 class GamePage extends StatefulWidget {
   const GamePage({
@@ -142,23 +142,12 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _handleMessageTap(types.Message message) async {
-    if (message is types.FileMessage) {
+    if (message is types.ImageMessage) {
       var localPath = message.uri;
 
-      if (message.uri.startsWith('http')) {
-        final client = http.Client();
-        final request = await client.get(Uri.parse(message.uri));
-        final bytes = request.bodyBytes;
-        final documentsDir = (await getApplicationDocumentsDirectory()).path;
-        localPath = '$documentsDir/${message.name}';
-
-        if (!File(localPath).existsSync()) {
-          final file = File(localPath);
-          await file.writeAsBytes(bytes);
-        }
-      }
-
-      await OpenFile.open(localPath);
+      Get.to(
+        () => Draw(localPath: localPath, room: widget.room.id),
+      );
     }
   }
 
@@ -215,6 +204,7 @@ class _GamePageState extends State<GamePage> {
                   customBottomWidget: const BottomAppBar(
                     child: SizedBox(height: 60),
                   ),
+                  disableImageGallery: true,
                 ),
               );
             },
