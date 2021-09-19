@@ -26,19 +26,19 @@ class AuthPage extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    const Text(
+                      'iSpy',
+                      style: TextStyle(
+                        color: Colors.orangeAccent,
+                        fontSize: 80,
+                      ),
+                    ),
+                    const SizedBox(height: 60),
                     Flexible(
                       flex: 1,
                       child: Image.asset(
                         'assets/logo/firebase_logo.png',
-                        height: 160,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Authentication',
-                      style: TextStyle(
-                        color: Colors.orangeAccent,
-                        fontSize: 40,
+                        height: 80,
                       ),
                     ),
                   ],

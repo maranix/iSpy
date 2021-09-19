@@ -70,7 +70,11 @@ class _HomePageState extends State<HomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Welcome, ${widget.username}'),
+                  Text(
+                    'Welcome, ${widget.username}',
+                    style: const TextStyle(fontSize: 30),
+                  ),
+                  const SizedBox(height: 10),
                   TextButton(
                     onPressed: () async => {
                       await Authentication.signOut(context: context),

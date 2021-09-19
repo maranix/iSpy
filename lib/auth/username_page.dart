@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
 import 'package:get/get.dart';
@@ -22,16 +23,45 @@ class UserNamePage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              'Hey!',
-              textAlign: TextAlign.start,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 23.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Hey There!',
+                      style: TextStyle(
+                        fontSize: 40,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    RichText(
+                      text: TextSpan(
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 20,
+                        ),
+                        children: [
+                          const TextSpan(text: 'Your current username is '),
+                          TextSpan(
+                            text: '${user.displayName},\n',
+                            style: const TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                          const TextSpan(
+                              text: 'Enter a new username to change it.')
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 10),
-            Text(
-                'Your current username is ${user.displayName}, enter a new username to change it.'),
-            const SizedBox(height: 40),
+            const SizedBox(height: 20),
             SizedBox(
-              width: MediaQuery.of(context).size.width * 0.8,
+              width: MediaQuery.of(context).size.width * 0.9,
               child: TextFormField(
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(
