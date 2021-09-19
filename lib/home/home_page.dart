@@ -55,6 +55,7 @@ class _HomePageState extends State<HomePage> {
     database.updateUserPresence();
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),

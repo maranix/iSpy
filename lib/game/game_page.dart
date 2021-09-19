@@ -148,6 +148,12 @@ class _GamePageState extends State<GamePage> {
       Get.to(
         () => Draw(localPath: localPath, room: widget.room.id),
       );
+    } else if (message is types.FileMessage) {
+      var localPath = message.uri;
+
+      Get.to(
+        () => Draw(localPath: localPath, room: widget.room.id),
+      );
     }
   }
 
