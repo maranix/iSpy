@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:extended_image/extended_image.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +9,6 @@ import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ispy/game/draw_screen.dart';
-import 'package:mime/mime.dart';
 
 class GamePage extends StatefulWidget {
   const GamePage({
@@ -26,6 +24,63 @@ class GamePage extends StatefulWidget {
 
 class _GamePageState extends State<GamePage> {
   bool _isAttachmentUploading = false;
+  bool _imageSent = false;
+  int score = 0;
+  int lives = 3;
+  bool _isAlive = true;
+  String player1 = "";
+  String player2 = "";
+
+  void _handleCorrectAnswer() {
+    setState(() {
+      score++;
+    });
+    var result = types.PartialText(
+        text: 'You guessed correctly! \n Your score is: $score');
+    _handleSendPressed(result);
+  }
+
+  void _handleWrongAnswer() {
+    if (lives != 1) {
+      setState(() {
+        lives--;
+      });
+      var result = types.PartialText(
+          text:
+              'Uh oh your guess was incorrect! \n Your remaining lives are : $lives');
+      _handleSendPressed(result);
+    } else {
+      var result = const types.PartialText(
+          text: 'Uh oh you do not have any lives left.');
+      _handleSendPressed(result);
+
+      setState(() {
+        _isAlive = false;
+      });
+    }
+  }
+
+  void _continueGame() {
+    setState(() {
+      score = 0;
+      lives = 3;
+      _imageSent = false;
+      _isAlive = true;
+    });
+
+    // FirebaseFirestore.instance
+    //     .collection('rooms')
+    //     .doc(widget.room.id)
+    //     .collection('messages')
+    //     .snapshots()
+    //     .forEach(
+    //   (element) {
+    //     for (QueryDocumentSnapshot snapshot in element.docs) {
+    //       snapshot.reference.delete();
+    //     }
+    //   },
+    // );
+  }
 
   void _handleAtachmentPressed() {
     showModalBottomSheet<void>(
@@ -73,30 +128,38 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _handleFileSelection() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
+    final result = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
     );
 
     if (result != null) {
       _setAttachmentUploading(true);
-      final name = result.files.single.name;
-      final filePath = result.files.single.path;
-      final file = File(filePath!);
+      final file = File(result.path);
+      final size = file.lengthSync();
+      final bytes = await result.readAsBytes();
+      final image = await decodeImageFromList(bytes);
+      final name = result.name;
 
       try {
         final reference = FirebaseStorage.instance.ref(name);
         await reference.putFile(file);
         final uri = await reference.getDownloadURL();
 
-        final message = types.PartialFile(
-          mimeType: lookupMimeType(filePath),
+        final message = types.PartialImage(
+          height: image.height.toDouble(),
           name: name,
-          size: result.files.single.size,
+          size: size,
           uri: uri,
+          width: image.width.toDouble(),
         );
 
-        FirebaseChatCore.instance.sendMessage(message, widget.room.id);
+        FirebaseChatCore.instance.sendMessage(
+          message,
+          widget.room.id,
+        );
         _setAttachmentUploading(false);
+        _imageSent = true;
+        _getPlayerIds();
       } finally {
         _setAttachmentUploading(false);
       }
@@ -135,6 +198,8 @@ class _GamePageState extends State<GamePage> {
           widget.room.id,
         );
         _setAttachmentUploading(false);
+        _imageSent = true;
+        _getPlayerIds();
       } finally {
         _setAttachmentUploading(false);
       }
@@ -179,6 +244,13 @@ class _GamePageState extends State<GamePage> {
     });
   }
 
+  void _getPlayerIds() {
+    FirebaseChatCore.instance.room(widget.room.id).forEach((element) {
+      player1 = element.users[0].id;
+      player2 = element.users[1].id;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -186,6 +258,18 @@ class _GamePageState extends State<GamePage> {
         systemOverlayStyle: SystemUiOverlayStyle.light,
         title: const Text('Game Lobby'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // FirebaseFirestore.instance
+              //     .collection('rooms')
+              //     .doc(widget.room.id)
+              //     .delete();
+            },
+            icon: const Icon(Icons.stop),
+          )
+        ],
       ),
       body: StreamBuilder<types.Room>(
         initialData: widget.room,
@@ -207,9 +291,39 @@ class _GamePageState extends State<GamePage> {
                   user: types.User(
                     id: FirebaseChatCore.instance.firebaseUser?.uid ?? '',
                   ),
-                  customBottomWidget: const BottomAppBar(
-                    child: SizedBox(height: 60),
-                  ),
+                  customBottomWidget: _imageSent &&
+                          _isAlive &&
+                          player1 == FirebaseChatCore.instance.firebaseUser!.uid
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 50.0, vertical: 10.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Container(
+                                decoration: const BoxDecoration(
+                                    color: Colors.red, shape: BoxShape.circle),
+                                child: IconButton(
+                                  onPressed: _handleWrongAnswer,
+                                  icon: const Icon(Icons.close),
+                                ),
+                              ),
+                              Container(
+                                decoration: const BoxDecoration(
+                                    color: Colors.green,
+                                    shape: BoxShape.circle),
+                                child: IconButton(
+                                  onPressed: _handleCorrectAnswer,
+                                  icon: const Icon(Icons.done),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : TextButton(
+                          onPressed: _continueGame,
+                          child: const Text('Continue'),
+                        ),
                   disableImageGallery: true,
                 ),
               );
@@ -219,16 +333,18 @@ class _GamePageState extends State<GamePage> {
       ),
       floatingActionButtonLocation:
           FloatingActionButtonLocation.miniCenterDocked,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: FloatingActionButton(
-          backgroundColor: Colors.blue,
-          child: const Icon(Icons.add_a_photo),
-          onPressed: () => {
-            _handleAtachmentPressed(),
-          },
-        ),
-      ),
+      floatingActionButton: _imageSent
+          ? const SizedBox()
+          : Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: FloatingActionButton(
+                backgroundColor: Colors.blue,
+                child: const Icon(Icons.add_a_photo),
+                onPressed: () => {
+                  _handleAtachmentPressed(),
+                },
+              ),
+            ),
     );
   }
 }
