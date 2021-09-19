@@ -26,12 +26,13 @@ class _GamePageState extends State<GamePage> {
   final TextEditingController _textFieldController = TextEditingController();
   bool _isAttachmentUploading = false;
   bool _imageSent = false;
+  bool _isPlayerLoaded = false;
   int score = 0;
   int lives = 3;
   bool _isAlive = true;
+  String valueText = '';
   String player1 = '';
   String player2 = '';
-  String valueText = '';
 
   void _handleCorrectAnswer() {
     setState(() {
@@ -164,7 +165,6 @@ class _GamePageState extends State<GamePage> {
         _describeObjectDialog(context);
         _setAttachmentUploading(false);
         _imageSent = true;
-        _getPlayerIds();
       } finally {
         _setAttachmentUploading(false);
       }
@@ -205,7 +205,6 @@ class _GamePageState extends State<GamePage> {
         _imageSent = true;
         _describeObjectDialog(context);
         _setAttachmentUploading(false);
-        _getPlayerIds();
       } finally {
         _setAttachmentUploading(false);
       }
@@ -250,46 +249,53 @@ class _GamePageState extends State<GamePage> {
     });
   }
 
-  void _getPlayerIds() {
+  Future<void> _describeObjectDialog(BuildContext context) async {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Describe your object'),
+          content: TextField(
+            onChanged: (value) {
+              setState(() {
+                valueText = value;
+              });
+            },
+            controller: _textFieldController,
+            decoration: const InputDecoration(
+                hintText: "Use a letter to describe the object"),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                setState(() {
+                  var objectDescription = types.PartialText(
+                      text:
+                          'I spy with my little eye a thing starting with the letter: $valueText');
+                  _handleSendPressed(objectDescription);
+                  _textFieldController.clear();
+                  Navigator.pop(context);
+                });
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  void initState() {
     FirebaseChatCore.instance.room(widget.room.id).forEach((element) {
       player1 = element.users[0].id;
       player2 = element.users[1].id;
+      setState(() {
+        _isPlayerLoaded = true;
+      });
     });
-  }
 
-  Future<void> _describeObjectDialog(BuildContext context) async {
-    return showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Describe your object'),
-            content: TextField(
-              onChanged: (value) {
-                setState(() {
-                  valueText = value;
-                });
-              },
-              controller: _textFieldController,
-              decoration: const InputDecoration(
-                  hintText: "Use a letter to describe the object"),
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('OK'),
-                onPressed: () {
-                  setState(() {
-                    var objectDescription = types.PartialText(
-                        text:
-                            'I spy with my little eye a thing starting with the letter: $valueText');
-                    _handleSendPressed(objectDescription);
-                    _textFieldController.clear();
-                    Navigator.pop(context);
-                  });
-                },
-              ),
-            ],
-          );
-        });
+    super.initState();
   }
 
   @override
@@ -312,66 +318,72 @@ class _GamePageState extends State<GamePage> {
         initialData: widget.room,
         stream: FirebaseChatCore.instance.room(widget.room.id),
         builder: (context, snapshot) {
-          return StreamBuilder<List<types.Message>>(
-            initialData: const [],
-            stream: FirebaseChatCore.instance.messages(snapshot.data!),
-            builder: (context, snapshot) {
-              _getPlayerIds();
-              print(lives);
-              return SafeArea(
-                bottom: false,
-                child: Chat(
-                  isAttachmentUploading: _isAttachmentUploading,
-                  messages: snapshot.data ?? [],
-                  onAttachmentPressed: _handleAtachmentPressed,
-                  onMessageTap: _handleMessageTap,
-                  onPreviewDataFetched: _handlePreviewDataFetched,
-                  onSendPressed: _handleSendPressed,
-                  user: types.User(
-                    id: FirebaseChatCore.instance.firebaseUser?.uid ?? '',
-                  ),
-                  customBottomWidget: _imageSent &&
-                          _isAlive &&
-                          player1 == FirebaseChatCore.instance.firebaseUser!.uid
-                      ? Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 50.0, vertical: 10.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                decoration: const BoxDecoration(
-                                    color: Colors.red, shape: BoxShape.circle),
-                                child: IconButton(
-                                  onPressed: _handleWrongAnswer,
-                                  icon: const Icon(Icons.close),
+          return _isPlayerLoaded
+              ? StreamBuilder<List<types.Message>>(
+                  initialData: const [],
+                  stream: FirebaseChatCore.instance.messages(snapshot.data!),
+                  builder: (context, snapshot) {
+                    return SafeArea(
+                      bottom: false,
+                      child: Chat(
+                        isAttachmentUploading: _isAttachmentUploading,
+                        messages: snapshot.data ?? [],
+                        onAttachmentPressed: _handleAtachmentPressed,
+                        onMessageTap: _handleMessageTap,
+                        onPreviewDataFetched: _handlePreviewDataFetched,
+                        onSendPressed: _handleSendPressed,
+                        user: types.User(
+                          id: FirebaseChatCore.instance.firebaseUser?.uid ?? '',
+                        ),
+                        customBottomWidget: _imageSent &&
+                                _isAlive &&
+                                player1 ==
+                                    FirebaseChatCore.instance.firebaseUser!.uid
+                            ? Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 50.0, vertical: 10.0),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      decoration: const BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle),
+                                      child: IconButton(
+                                        onPressed: _handleWrongAnswer,
+                                        icon: const Icon(Icons.close),
+                                      ),
+                                    ),
+                                    Container(
+                                      decoration: const BoxDecoration(
+                                          color: Colors.green,
+                                          shape: BoxShape.circle),
+                                      child: IconButton(
+                                        onPressed: _handleCorrectAnswer,
+                                        icon: const Icon(Icons.done),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              Container(
-                                decoration: const BoxDecoration(
-                                    color: Colors.green,
-                                    shape: BoxShape.circle),
-                                child: IconButton(
-                                  onPressed: _handleCorrectAnswer,
-                                  icon: const Icon(Icons.done),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : player1 ==
-                                  FirebaseChatCore.instance.firebaseUser!.uid &&
-                              lives == 1
-                          ? TextButton(
-                              onPressed: _continueGame,
-                              child: const Text('Continue'),
-                            )
-                          : const SizedBox(),
-                  disableImageGallery: true,
-                ),
-              );
-            },
-          );
+                              )
+                            : player1 ==
+                                        FirebaseChatCore
+                                            .instance.firebaseUser!.uid &&
+                                    lives == 1
+                                ? TextButton(
+                                    onPressed: _continueGame,
+                                    child: const Text('Continue'),
+                                  )
+                                : const SizedBox(),
+                        disableImageGallery: true,
+                      ),
+                    );
+                  },
+                )
+              : const Center(
+                  child: CircularProgressIndicator(),
+                );
         },
       ),
       floatingActionButtonLocation:
