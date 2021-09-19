@@ -136,7 +136,7 @@ class _HomePageState extends State<HomePage> {
                                 Icon(
                                   Icons.circle,
                                   size: 12.0,
-                                  color: presence!['presence']
+                                  color: presence!['presense']
                                       ? Colors.greenAccent[400]
                                       : Colors.grey,
                                 )
