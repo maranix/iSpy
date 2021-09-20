@@ -1,29 +1,42 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility that Flutter provides. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:ispy/app/app.dart';
+import 'package:ispy/auth/auth_page.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('MyApp Widget Tests', (WidgetTester tester) async {
+    expect(const MyApp(), isA<StatelessWidget>());
+
     await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    final getMaterialApp = find.byType(GetMaterialApp);
+    final homeIsAuth = find.byType(AuthPage);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(getMaterialApp, findsOneWidget);
+    expect(homeIsAuth, findsOneWidget);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('AuthPage Widget Tests', (WidgetTester tester) async {
+    expect(const AuthPage(), isA<StatelessWidget>());
+    expect(const GoogleSignInButton(), isA<StatefulWidget>());
+
+    await tester.pumpWidget(const GetMaterialApp(home: AuthPage()));
+
+    final textWidgets = find.byType(Text);
+    final columnWidgets = find.byType(Column);
+    final appTitle = find.text('iSpy');
+
+    expect(textWidgets, findsOneWidget);
+    expect(appTitle, findsOneWidget);
+    expect(columnWidgets, findsNWidgets(2));
+
+    // Google Sign In Button Widget Tests
+    await tester.pumpWidget(const GetMaterialApp(home: GoogleSignInButton()));
+
+    final signInButton = find.byType(OutlinedButton);
+    final buttonText = find.text('Sign in with Google');
+    expect(signInButton, findsOneWidget);
+    expect(buttonText, findsOneWidget);
   });
 }
