@@ -51,6 +51,8 @@ Run the app
   flutter run
 ```
 
+Note:- It may seem like that the app has frozen or not working at all while sending images but it is only because there is no progress indicator for that, so don't panic and just wait for it to upload. It will be fixed in the next release as mentioned in [ROADMAP](https://github.com/ramanverma2k/iSpy/blob/main/ROADMAP.md).
+
 ## Screenshots
 <p align="center">
   <img width="32%" src="assets/screenshots/1.jpg?raw=true">
